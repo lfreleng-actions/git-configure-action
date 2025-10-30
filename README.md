@@ -1,49 +1,60 @@
 <!--
-# SPDX-License-Identifier: Apache-2.0
-# SPDX-FileCopyrightText: 2025 The Linux Foundation
+SPDX-License-Identifier: Apache-2.0
+SPDX-FileCopyrightText: 2024 The Linux Foundation
 -->
 
-# 🛠️ Template Action
+# 🛠️ Configure Git Settings
 
-This is a template for the other actions in this Github organisation.
+Action to configure the git username/email from inside a GitHub action/workflow.
 
-## actions-template
+## git-configure-action
 
-## Usage Example
+## Usage Examples
 
-<!-- markdownlint-disable MD046 -->
+### Basic Usage (configure current directory/repository)
 
 ```yaml
-steps:
-  - name: "Action template"
-    id: action-template
-    uses: lfreleng-actions/actions-template@main
-    with:
-      input: "placeholder"
+- name: 'configure Git settings for commit'
+  uses: lfit/releng-reusable-workflows/.github/actions/git-configure-action@main
+  with:
+      commit_user_name: 'John Doe'
+      commit_user_email: 'john.doe@somedomain.org'
 ```
 
-<!-- markdownlint-enable MD046 -->
+### Configure Git for a Specific Repository/Directory
+
+```yaml
+- name: 'Configure Git settings for submodule/folder'
+  uses: lfit/releng-reusable-workflows/.github/actions/git-configure-action@main
+  with:
+      commit_user_name: 'John Doe'
+      commit_user_email: 'john.doe@somedomain.org'
+      path_prefix: 'path/to/git/repository'
+```
 
 ## Inputs
 
+By default, the action will configure git operations to use the github actions
+automation/bot account.
+
 <!-- markdownlint-disable MD013 -->
 
-| Name          | Required | Description  |
-| ------------- | -------- | ------------ |
-| input         | False    | Action input |
+| Variable name     | Required | Default value                                         | Description                              |
+| ----------------- | -------- | ----------------------------------------------------- | ---------------------------------------- |
+| commit_user_name  | false    | github-actions[bot]                                   | user name                                |
+| commit_user_email | false    | 41898282+github-actions[bot]@users.noreply.github.com | user email address                       |
+| path_prefix       | false    | .                                                     | directory location containing git repository |
 
 <!-- markdownlint-enable MD013 -->
 
 ## Outputs
 
-<!-- markdownlint-disable MD013 -->
+The action has no outputs, but does provide summary step information when
+invoked. The action will configure the git repository located at the specified
+path_prefix directory (defaults to current directory if not specified).
 
-| Name          | Description   |
-| ------------- | ------------- |
-| output        | Action output |
+## Requirements/Dependencies
 
-<!-- markdownlint-enable MD013 -->
-
-## Implementation Details
-
-## Notes
+The git command-line tool must be available in the environment for the action
+to succeed. The specified path_prefix directory must exist and contain a valid
+git repository (with a .git folder).

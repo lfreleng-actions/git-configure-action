@@ -2,36 +2,56 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: 2025 The Linux Foundation
 
-# actions-template
-name: "🛠️ Actions Template"
-description: "Description of action"
-# Any relevant notes/observations can go here
+name: '🛠️ Configure Git Settings'
+description: 'Configure Git from inside a GitHub action/workflow'
 
 inputs:
-  input:
-    description: "Description of input"
-    required: true
-
-outputs:
-  output:
-    description: "Description of output"
-    value: ${{ steps.code.outputs.output }}
+  commit_user_name:
+    description: 'User name used to perform commits'
+    required: false
+    default: 'github-actions[bot]'
+  commit_user_email:
+    description: 'User email used to perform commits'
+    required: false
+    default: '41898282+github-actions[bot]@users.noreply.github.com'
+  path_prefix:
+    description: 'Directory location containing git repository'
+    required: false
+    default: '.'
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
-    - name: "Friendly Name"
-      id: code
+    - name: 'Configure Git settings'
+      id: configure
       shell: bash
+      env:
+        INPUT_PATH_PREFIX: ${{ inputs.path_prefix }}
       run: |
-        # Friendly Name
-        input="${{ inputs.input }}"
-        if [ -z "$input" ]; then
-          echo "Error: mandatory input was not set/configured ❌"
-          exit 1
+        # Configure Git settings
+        path_prefix="${INPUT_PATH_PREFIX}"
+
+        # Verify path_prefix is a valid directory path
+        if [ ! -d "$path_prefix" ]; then
+          echo "Error: invalid path/prefix to directory ❌"; exit 1
         fi
 
-        echo "output=$input" >> "$GITHUB_ENV"
-        echo "output=$input" >> "$GITHUB_OUTPUT"
-        echo "Action received: $input ✅"
-        echo "Action received: $input ✅" >> "$GITHUB_STEP_SUMMARY"
+        # Verify the directory contains a git repository
+        if [ ! -d "$path_prefix/.git" ]; then
+          echo "Error: directory does not contain a git repository ❌"; exit 1
+        fi
+
+        git -C "$path_prefix" config user.name \
+          '${{ inputs.commit_user_name }}'
+        git -C "$path_prefix" config user.email \
+          '${{ inputs.commit_user_email }}'
+        echo '🛠️ Configure Git Settings'
+        echo "Repository path: $path_prefix"
+        echo 'User name: ${{ inputs.commit_user_name }}'
+        echo 'User email: ${{ inputs.commit_user_email }}'
+        {
+          echo '### 🛠️ Configure Git Settings'
+          echo "Repository path: $path_prefix"
+          echo 'User name: ${{ inputs.commit_user_name }}'
+          echo 'User email: ${{ inputs.commit_user_email }}'
+        } >> "$GITHUB_STEP_SUMMARY"

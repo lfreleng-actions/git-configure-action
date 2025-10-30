@@ -2,74 +2,203 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: 2025 The Linux Foundation
 
-# Action test/validation workflow
-name: "Test GitHub Action 🧪"
+# action test/validation workflow
+name: 'Test GitHub Action 🧪'
 
 # yamllint disable-line rule:truthy
 on:
   workflow_dispatch:
   push:
-    branches: ["main"]
+    branches: ['main']
   pull_request:
-    branches: ["main"]
+    branches: ['main']
 
 concurrency:
-  group: "${{ github.workflow }}-${{ github.ref }}"
+  group: '${{ github.workflow }}-${{ github.ref }}'
   cancel-in-progress: true
 
 permissions: {}
 
 jobs:
-  ### Test the GitHub Action in this Repository ###
+  ### test the github action in this repository ###
   tests:
-    name: "Test local GitHub Action"
+    name: 'Test local GitHub Action'
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    timeout-minutes: 10 # Increase this timeout value as needed
+    timeout-minutes: 10
     steps:
-      # Harden the runner used by this workflow
+      # harden the runner used by this workflow
       # yamllint disable-line rule:line-length
       - uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
         with:
           egress-policy: audit
 
-      - name: "Checkout repository"
+      - name: 'Checkout repository'
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
-      # Perform setup prior to running test(s)
-      - name: "Testing setup step"
+      - name: 'Test default configuration'
+        uses: ./
+        id: default_test
+
+      - name: 'Verify default Git config'
         shell: bash
         run: |
-          # Testing setup step
-          echo "Testing setup step"
-          echo "Testing setup step/summary output" >> "$GITHUB_STEP_SUMMARY"
+          # Verify default Git config
+          user_name=$(git config user.name)
+          user_email=$(git config user.email)
 
-      - name: "Running local action: ${{ github.repository }}"
+          echo "Configured git user.name: $user_name"
+          echo "Configured git user.email: $user_email"
+
+          if [[ "$user_name" != "github-actions[bot]" ]]; then
+            echo "Error: expected default user name" \
+              "'github-actions[bot]', got '$user_name'"
+            exit 1
+          fi
+
+          expected_email="41898282+github-actions[bot]@users.noreply.github.com"
+          if [[ "$user_email" != "$expected_email" ]]; then
+            echo "Error: expected default email '$expected_email', got" \
+              "'$user_email'"
+            exit 1
+          fi
+
+          echo "✅ Default configuration test passed"
+          echo "### ✅ Default configuration test passed" >> \
+            "$GITHUB_STEP_SUMMARY"
+
+      - name: 'Test custom configuration'
         uses: ./
         with:
-          input: "test input 💬"
+          commit_user_name: 'Test User'
+          commit_user_email: 'test@example.com'
 
-      - name: "Validated local action: ${{ github.repository }}"
+      - name: 'verify custom git config'
         shell: bash
         run: |
-          # Local action validation
-          echo "Validated local action: ${{ github.repository }}"
-          echo "Validation step summary output" >> "$GITHUB_STEP_SUMMARY"
+          # verify custom git configuration
+          user_name=$(git config user.name)
+          user_email=$(git config user.email)
 
-      # yamllint disable-line rule:line-length
-      - name: "Running local action: ${{ github.repository }} [Override Failure]"
+          echo "Configured git user.name: $user_name"
+          echo "Configured git user.email: $user_email"
+
+          if [[ "$user_name" != "Test User" ]]; then
+            echo "Error: expected custom user name 'Test User', got" \
+              "'$user_name'"
+            exit 1
+          fi
+
+          if [[ "$user_email" != "test@example.com" ]]; then
+            echo "Error: expected custom email 'test@example.com', got" \
+              "'$user_email'"
+            exit 1
+          fi
+
+          echo "✅ Custom configuration test passed"
+          echo "### ✅ Custom configuration test passed" >> \
+            "$GITHUB_STEP_SUMMARY"
+
+      - name: 'Test git commit functionality'
+        shell: bash
+        run: |
+          # Test git commit functionality
+          echo "test content" > test_file.txt
+          git add test_file.txt
+          git commit -m 'test commit'
+
+          # Verify commit author
+          commit_author=$(git log -1 --pretty=format:'%an <%ae>')
+          expected_author="Test User <test@example.com>"
+
+          if [[ "$commit_author" != "$expected_author" ]]; then
+            echo "Error: expected commit author '$expected_author', got" \
+              "'$commit_author'"
+            exit 1
+          fi
+
+          echo "✅ Git commit functionality test passed"
+          echo "### ✅ Git commit functionality test passed" >> \
+            "$GITHUB_STEP_SUMMARY"
+
+      - name: 'Test path_prefix functionality'
+        shell: bash
+        run: |
+          # Test path_prefix functionality
+          mkdir -p test-repo
+          cd test-repo
+          git init
+          git config user.name "Initial User"
+          git config user.email "initial@example.com"
+          echo "test content" > test.txt
+          git add test.txt
+          git commit -m "initial commit"
+          cd ..
+
+      - name: 'Configure git for test repository'
         uses: ./
-        id: failure
-        continue-on-error: true
         with:
-          invalid_input: "Some garbage"
+          commit_user_name: 'path-test-user'
+          commit_user_email: 'path-test@example.com'
+          path_prefix: 'test-repo'
 
-      # Failure testing is also important
-      - name: "Error if step above did NOT fail"
-        if: steps.failure.outcome == 'success'
+      - name: 'Verify path_prefix git config'
         shell: bash
         run: |
-          # Error if step above did NOT fail
-          echo "Error: previous test step did NOT fail ❌"
-          exit 1
+          # Verify path_prefix git config
+          user_name=$(git -C test-repo config user.name)
+          user_email=$(git -C test-repo config user.email)
+
+          echo "Configured git user.name in test-repo: $user_name"
+          echo "Configured git user.email in test-repo: $user_email"
+
+          if [[ "$user_name" != "path-test-user" ]]; then
+            echo "Error: expected path_prefix user name" \
+              "'path-test-user', got '$user_name'"
+            exit 1
+          fi
+
+          if [[ "$user_email" != "path-test@example.com" ]]; then
+            echo "Error: expected path_prefix email" \
+              "'path-test@example.com', got '$user_email'"
+            exit 1
+          fi
+
+          echo "✅ path_prefix configuration test passed"
+          echo "### ✅ path_prefix configuration test passed" >> \
+            "$GITHUB_STEP_SUMMARY"
+
+      - name: 'Test path_prefix commit functionality'
+        shell: bash
+        run: |
+          # Test path_prefix commit functionality
+          cd test-repo
+          echo "path prefix test content" > path_test_file.txt
+          git add path_test_file.txt
+          git commit -m "path prefix test commit"
+
+          # verify commit author
+          commit_author=$(git log -1 --pretty=format:'%an <%ae>')
+          expected_author="path-test-user <path-test@example.com>"
+
+          if [[ "$commit_author" != "$expected_author" ]]; then
+            echo "Error: expected path_prefix commit author" \
+              "'$expected_author', got '$commit_author'"
+            exit 1
+          fi
+
+          echo "✅ path_prefix commit functionality test passed"
+          echo "### ✅ path_prefix commit functionality test passed" >> \
+            "$GITHUB_STEP_SUMMARY"
+
+      - name: 'Test invalid path_prefix error handling'
+        shell: bash
+        run: |
+          # Test invalid path_prefix error handling
+          if ../git-configure-action/action.yaml \
+            -e 'path_prefix=nonexistent-directory' 2>/dev/null; then
+            echo "Error: action should have failed with invalid path"
+            exit 1
+          fi
+          echo "✅ Invalid path_prefix error handling test passed"
