@@ -39,10 +39,10 @@ automation/bot account.
 
 <!-- markdownlint-disable MD013 -->
 
-| Variable name     | Required | Default value                                         | Description                              |
-| ----------------- | -------- | ----------------------------------------------------- | ---------------------------------------- |
-| commit_user_name  | false    | github-actions[bot]                                   | user name                                |
-| commit_user_email | false    | 41898282+github-actions[bot]@users.noreply.github.com | user email address                       |
+| Variable name     | Required | Default value                                         | Description                                  |
+| ----------------- | -------- | ----------------------------------------------------- | -------------------------------------------- |
+| commit_user_name  | false    | github-actions[bot]                                   | user name                                    |
+| commit_user_email | false    | 41898282+github-actions[bot]@users.noreply.github.com | user email address                           |
 | path_prefix       | false    | .                                                     | directory location containing git repository |
 
 <!-- markdownlint-enable MD013 -->
