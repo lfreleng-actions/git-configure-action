@@ -27,6 +27,8 @@ runs:
       shell: bash
       env:
         INPUT_PATH_PREFIX: ${{ inputs.path_prefix }}
+        INPUT_COMMIT_USER_NAME: ${{ inputs.commit_user_name }}
+        INPUT_COMMIT_USER_EMAIL: ${{ inputs.commit_user_email }}
       run: |
         # Configure Git settings
         path_prefix="${INPUT_PATH_PREFIX}"
@@ -42,16 +44,16 @@ runs:
         fi
 
         git -C "$path_prefix" config user.name \
-          '${{ inputs.commit_user_name }}'
+          "$INPUT_COMMIT_USER_NAME"
         git -C "$path_prefix" config user.email \
-          '${{ inputs.commit_user_email }}'
+          "$INPUT_COMMIT_USER_EMAIL"
         echo '🛠️ Configure Git Settings'
         echo "Repository path: $path_prefix"
-        echo 'User name: ${{ inputs.commit_user_name }}'
-        echo 'User email: ${{ inputs.commit_user_email }}'
+        echo "User name: $INPUT_COMMIT_USER_NAME"
+        echo "User email: $INPUT_COMMIT_USER_EMAIL"
         {
           echo '### 🛠️ Configure Git Settings'
           echo "Repository path: $path_prefix"
-          echo 'User name: ${{ inputs.commit_user_name }}'
-          echo 'User email: ${{ inputs.commit_user_email }}'
+          echo "User name: $INPUT_COMMIT_USER_NAME"
+          echo "User email: $INPUT_COMMIT_USER_EMAIL"
         } >> "$GITHUB_STEP_SUMMARY"
