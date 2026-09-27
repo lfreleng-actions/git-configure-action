@@ -45,7 +45,7 @@ jobs:
           persist-credentials: false
 
       - name: 'Test default configuration'
-        uses: ./
+        uses: $/
         id: default_test
 
       - name: 'Verify default Git config'
@@ -76,7 +76,7 @@ jobs:
             "$GITHUB_STEP_SUMMARY"
 
       - name: 'Test custom configuration'
-        uses: ./
+        uses: $/
         with:
           commit_user_name: 'Test User'
           commit_user_email: 'test@example.com'
@@ -144,7 +144,7 @@ jobs:
           cd ..
 
       - name: 'Configure git for test repository'
-        uses: ./
+        uses: $/
         with:
           commit_user_name: 'path-test-user'
           commit_user_email: 'path-test@example.com'
