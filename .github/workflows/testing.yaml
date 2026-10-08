@@ -200,12 +200,47 @@ jobs:
             "$GITHUB_STEP_SUMMARY"
 
       - name: 'Test invalid path_prefix error handling'
+        id: invalid_path
+        uses: $/
+        continue-on-error: true
+        with:
+          path_prefix: 'nonexistent-directory'
+
+      - name: 'Verify invalid path_prefix failed'
         shell: bash
+        env:
+          OUTCOME: ${{ steps.invalid_path.outcome }}
         run: |
-          # Test invalid path_prefix error handling
-          if ../git-configure-action/action.yaml \
-            -e 'path_prefix=nonexistent-directory' 2>/dev/null; then
-            echo "Error: action should have failed with invalid path"
+          # Verify invalid path_prefix failed
+          if [[ "$OUTCOME" != "failure" ]]; then
+            echo "Error: action should have failed with invalid path" \
+              "(outcome: '$OUTCOME')"
             exit 1
           fi
+
           echo "✅ Invalid path_prefix error handling test passed"
+          echo "### ✅ Invalid path_prefix error handling test passed" >> \
+            "$GITHUB_STEP_SUMMARY"
+
+      - name: 'Test path_prefix without a git repository'
+        id: no_git_repo
+        uses: $/
+        continue-on-error: true
+        with:
+          path_prefix: '.github'
+
+      - name: 'Verify non-repository path_prefix failed'
+        shell: bash
+        env:
+          OUTCOME: ${{ steps.no_git_repo.outcome }}
+        run: |
+          # Verify non-repository path_prefix failed
+          if [[ "$OUTCOME" != "failure" ]]; then
+            echo "Error: action should have failed without a .git" \
+              "directory (outcome: '$OUTCOME')"
+            exit 1
+          fi
+
+          echo "✅ Non-repository path_prefix error handling test passed"
+          echo "### ✅ Non-repository path_prefix error handling test" \
+            "passed" >> "$GITHUB_STEP_SUMMARY"
